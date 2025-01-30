@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/users');
+                if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+                const data = await response.json();
+                const table = document.getElementById('data-table');
+                table.innerHTML = "";  // Limpiar la tabla antes de actualizarla
+
+                data.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${user.id}</td><td>${user.name}</td><td>${user.email}</td>`;
+                    table.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error obteniendo los datos:", error);
+            }
+        }
+
+        async function addUser(event) {
+            event.preventDefault();  // Evita que el formulario recargue la página
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+
+                if (!response.ok) throw new Error('Error al enviar datos');
+
+                document.getElementById('user-form').reset(); // Limpia el formulario
+                fetchData();  // Recargar la lista de usuarios
+            } catch (error) {
+                console.error("Error agregando usuario:", error);
+            }
+        }
+
+        window.onload = fetchData;
+    </script>
+</head>
+<body>
+    <h1>Usuarios</h1>
+
+    <h2>Agregar Usuario</h2>
+    <form id="user-form" onsubmit="addUser(event)">
+        <label for="name">Nombre:</label>
+        <input type="text" id="name" required>
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+        <button type="submit">Agregar</button>
+    </form>
+
+    <h2>Lista de Usuarios</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody id="data-table"></tbody>
+    </table>
+</body>
+</html>
