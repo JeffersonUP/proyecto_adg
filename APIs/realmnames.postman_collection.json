@@ -1,0 +1,259 @@
+{
+	"info": {
+		"_postman_id": "b42f6bb2-9c34-40d6-8ef2-29ac1a9e1796",
+		"name": "Auction House test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41407823"
+	},
+	"item": [
+		{
+			"name": "tokem",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Extraer el access_token de la respuesta\r",
+							"const response = pm.response.json();\r",
+							"pm.environment.set(\"access_token\", response.access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "n1tGP5M0Cqfx9RXk3idO7IRjL64nMEE9",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "508a15935a30496eb1c47ffe5cee3a03",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://oauth.battle.net/token",
+					"protocol": "https",
+					"host": [
+						"oauth",
+						"battle",
+						"net"
+					],
+					"path": [
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "realmID",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();\r",
+							"let connectedRealms = response.connected_realms.map(realm => realm.href);\r",
+							"let realmIDs = connectedRealms.map(href => {\r",
+							"    let match = href.match(/connected-realm\\/(\\d+)\\?/);\r",
+							"    return match ? match[1] : null;\r",
+							"}).filter(id => id !== null);\r",
+							"\r",
+							"// Guardamos la lista de IDs como una variable de entorno\r",
+							"pm.environment.set(\"realm_ids\", JSON.stringify(realmIDs));\r",
+							"pm.environment.set(\"current_index\", 0);  // Inicializamos el índice\r",
+							"\r",
+							"// Imprimimos en la consola para verificar\r",
+							"console.log(\"Realm IDs:\", realmIDs);\r",
+							"\r",
+							"console.log(\"Current Realm ID:\", pm.environment.get(\"current_realm_id\"));\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://us.api.blizzard.com/data/wow/connected-realm/index?namespace=dynamic-us&locale=en_US",
+					"protocol": "https",
+					"host": [
+						"us",
+						"api",
+						"blizzard",
+						"com"
+					],
+					"path": [
+						"data",
+						"wow",
+						"connected-realm",
+						"index"
+					],
+					"query": [
+						{
+							"key": "namespace",
+							"value": "dynamic-us"
+						},
+						{
+							"key": "locale",
+							"value": "en_US"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "realmname test",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Obtener la lista de IDs y el índice actual\r",
+							"let realmIDs = JSON.parse(pm.environment.get(\"realm_ids\"));\r",
+							"let currentIndex = parseInt(pm.environment.get(\"current_index\") || 0);\r",
+							"\r",
+							"// Verificar si hay más elementos para procesar\r",
+							"if (currentIndex < realmIDs.length) {\r",
+							"    let currentRealmID = realmIDs[currentIndex];\r",
+							"    pm.environment.set(\"current_realm_id\", currentRealmID);  // Guardamos el ID actual\r",
+							"    // Continuamos con la siguiente solicitud\r",
+							"} else {\r",
+							"    // Si ya no hay más elementos, detendremos la ejecución\r",
+							"    postman.setNextRequest(null);  // Detiene el flujo de la colección\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Incrementamos el índice\r",
+							"let currentIndex = parseInt(pm.environment.get(\"current_index\") || 0);\r",
+							"pm.environment.set(\"current_index\", currentIndex + 1);\r",
+							"\r",
+							"// Comprobamos si hay más reinos para procesar\r",
+							"if (currentIndex + 1 < JSON.parse(pm.environment.get(\"realm_ids\")).length) {\r",
+							"    // Continuamos con la misma solicitud (recursión)\r",
+							"    pm.execution.setNextRequest(pm.info.requestName);\r",
+							"} else {\r",
+							"    // Si ya no hay más reinos, detenemos la ejecución\r",
+							"    postman.setNextRequest(null);\r",
+							"}\r",
+							"\r",
+							"\r",
+							"// Obtén la respuesta JSON\r",
+							"let response = pm.response.json();\r",
+							"\r",
+							"// Recupera la lista de respuestas previamente guardadas (si existe)\r",
+							"let allResponses = JSON.parse(pm.environment.get(\"all_responses\") || \"[]\");\r",
+							"\r",
+							"// Agrega la nueva respuesta a la lista\r",
+							"allResponses.push(response);\r",
+							"\r",
+							"// Guarda la lista actualizada en la variable de entorno\r",
+							"pm.environment.set(\"all_responses\", JSON.stringify(allResponses));\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://us.api.blizzard.com/data/wow/connected-realm/{{current_realm_id}}?namespace=dynamic-us&locale=en_US",
+					"protocol": "https",
+					"host": [
+						"us",
+						"api",
+						"blizzard",
+						"com"
+					],
+					"path": [
+						"data",
+						"wow",
+						"connected-realm",
+						"{{current_realm_id}}"
+					],
+					"query": [
+						{
+							"key": "namespace",
+							"value": "dynamic-us"
+						},
+						{
+							"key": "locale",
+							"value": "en_US"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
