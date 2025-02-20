@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 import sqlite3
-from flask_cors import CORS  # Para permitir peticiones desde el navegador
+from flask_cors import CORS  # Para permitir peticiones desde el navegador CTM
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para evitar problemas en la conexión
