@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reinos de World of Warcraft</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        table { width: 80%; margin: 20px auto; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        input, button { padding: 10px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Lista de Reinos</h1>
+
+    <!-- Formulario de búsqueda -->
+    <form action="/" method="GET">
+        <input type="text" name="search" placeholder="Buscar reino...." value="<%= typeof searchQuery !== 'undefined' ? searchQuery : '' %>">
+
+        <button type="submit">Buscar</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Zona horaria</th>
+                <th>Slug</th>
+                <th>Región</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (realms.length > 0) { %>
+                <% realms.forEach(realm => { %>
+                    <tr>
+                        <td><%= realm.id %></td>
+                        <td><%= realm.name %></td>
+                        <td><%= realm.category %></td>
+                        <td><%= realm.timezone %></td>
+                        <td><%= realm.slug %></td>
+                        <td><%= realm.region_id %></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6">No se encontraron reinos</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</body>
+</html>
