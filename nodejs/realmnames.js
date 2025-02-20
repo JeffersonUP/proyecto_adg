@@ -1,5 +1,5 @@
 // pendejo codigo no aguanta nada
-// hasdhash
+// vida antes que muerte
 const { Client } = require("pg");
 const fs = require("fs");
 
