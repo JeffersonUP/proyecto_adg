@@ -1,3 +1,5 @@
+// pendejo codigo no aguanta nada
+
 const { Client } = require("pg");
 const fs = require("fs");
 
