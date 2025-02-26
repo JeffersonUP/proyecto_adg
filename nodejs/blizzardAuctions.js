@@ -2,8 +2,8 @@ const fs = require("fs");
 const fetch = require("node-fetch");
 
 // Configuración de autenticación
-const CLIENT_ID = "508a15935a30496eb1c47ffe5cee3a03";  // Tu client ID de Blizzard
-const CLIENT_SECRET = "n1tGP5M0Cqfx9RXk3idO7IRjL64nMEE9";  // Tu client secret de Blizzard
+const CLIENT_ID = "508a15935a30496eb1c47ffe5cee3a03";  
+const CLIENT_SECRET = "n1tGP5M0Cqfx9RXk3idO7IRjL64nMEE9";  
 
 // URLs de Blizzard API
 const TOKEN_URL = "https://oauth.battle.net/token";
@@ -13,7 +13,20 @@ const AUCTION_URL = "https://us.api.blizzard.com/data/wow/connected-realm/{realm
 // Variable para guardar el token
 let accessToken = "";
 
-// 1. Obtener el access_token
+// IDs de los ítems a buscar
+const itemIdsToSearch = [
+    225728, // Acidic Attendant's Loop
+    225720, // Web Acolyte's Hood
+    225721, // Prime Slime Slippers
+    225722, // Adorned Lynxborne Pauldrons
+    225723, // Venom Stalker's Strap
+    225724, // Shrillwing Hunter's Prey
+    225725, // Lurking Marauder's Binding
+    225727, // Captured Earthen's Ironhorns
+    225744  // Heritage Militia's Stompers
+];
+
+// Obtener el access_token
 async function getToken() {
     const response = await fetch(TOKEN_URL, {
         method: "POST",
@@ -32,7 +45,7 @@ async function getToken() {
     console.log("✅ Access Token obtenido: ", accessToken);
 }
 
-// 2. Obtener la lista de realm_ids
+// Obtener la lista de realm_ids
 async function getRealmIds() {
     const response = await fetch(REALM_URL, {
         method: "GET",
@@ -55,7 +68,7 @@ async function getRealmIds() {
     return realmIds;
 }
 
-// 3. Obtener subastas para cada realm_id
+// Obtener subastas para cada realm_id
 async function getAuctionsForRealm(realmId) {
     const url = AUCTION_URL.replace("{realm_id}", realmId);
 
@@ -69,14 +82,26 @@ async function getAuctionsForRealm(realmId) {
 
     const data = await response.json();
 
-    // Guardar en un archivo separado
-    const filePath = `nodejs/subastas/subasta_${realmId}.json`;
-    fs.mkdirSync("nodejs/subastas", { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    console.log(`✅ Archivo guardado: ${filePath}`);
+    // Filtrar subastas de los ítems que estamos buscando
+    const filteredAuctions = data.auctions.filter(auction => 
+        itemIdsToSearch.includes(auction.item.id)
+    );
+
+    // Mostrar los detalles de las subastas filtradas
+    if (filteredAuctions.length > 0) {
+        console.log(`\n🔍 Subastas en Realm ${realmId} para los ítems buscados:`);
+        filteredAuctions.forEach(auction => {
+            console.log(`- Item ID: ${auction.item.id}`);
+            console.log(`  Precio Buyout: ${auction.buyout}`);
+            console.log(`  Cantidad: ${auction.quantity}`);
+            console.log(`  Tiempo restante: ${auction.time_left}`);
+        });
+    } else {
+        console.log(`No se encontraron subastas para los ítems buscados en Realm ${realmId}.`);
+    }
 }
 
-// 4. Ejecutar el flujo completo
+// Ejecutar el flujo completo
 async function ejecutarProceso() {
     try {
         // Obtener el access token
@@ -91,7 +116,7 @@ async function ejecutarProceso() {
             await getAuctionsForRealm(realmId);
         }
 
-        console.log("✅ Proceso completado.");
+        console.log("\n✅ Proceso completado.");
     } catch (error) {
         console.error("❌ Error en el proceso:", error);
     }
