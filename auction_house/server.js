@@ -1,41 +1,68 @@
-require('dotenv').config();
-const express = require('express');
-const { neon } = require('@neondatabase/serverless');
-const path = require('path');
+const express = require("express");
+const { Pool } = require("pg");
+const dotenv = require("dotenv");
 
+dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-// Configurar EJS
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-require('dotenv').config();
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL.includes("localhost") ? false : { rejectUnauthorized: false }
+});
 
+app.set("view engine", "ejs");
+app.use(express.static("public")); // Para servir imágenes si están en local
 
-// Conectar con la base de datos Neon
-const sql = neon(process.env.DATABASE_URL);
-
-app.get('/', async (req, res) => {
+// Ruta principal con búsqueda de reinos
+app.get("/", async (req, res) => {
     try {
-        const searchQuery = req.query.search || ''; // Definir searchQuery por defecto
+        const searchQuery = req.query.search || "";
+        const realmsQuery = `
+            SELECT * FROM realms
+            WHERE name ILIKE $1
+            ORDER BY name;
+        `;
+        const realms = await pool.query(realmsQuery, [`%${searchQuery}%`]);
 
-        const connectedRealms = await sql`SELECT * FROM connected_realms`;
-        let realms;
-
-        if (searchQuery) {
-            realms = await sql`SELECT * FROM realms WHERE name ILIKE ${'%' + searchQuery + '%'}`;
-        } else {
-            realms = await sql`SELECT * FROM realms`;
-        }
-
-        res.render('index', { connectedRealms, realms, searchQuery }); // 🔹 Pasamos searchQuery
+        res.render("index", { realms: realms.rows, searchQuery });
     } catch (error) {
-        console.error('Error al obtener datos:', error);
-        res.status(500).send('Error en la base de datos');
+        console.error("Error al obtener los reinos:", error);
+        res.status(500).send("Error en el servidor");
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+// Ruta para obtener los items de un reino específico
+app.get("/reino/:id", async (req, res) => {
+    try {
+        const realmId = req.params.id;
+
+        // Obtener la información del reino
+        const realmQuery = "SELECT * FROM realms WHERE id = $1;";
+        const realmResult = await pool.query(realmQuery, [realmId]);
+
+        // Obtener los items asociados a ese reino
+        const itemsQuery = `
+            SELECT slot, label, cant, price, image FROM items
+            WHERE realm_id = $1
+            ORDER BY slot;
+        `;
+        const itemsResult = await pool.query(itemsQuery, [realmId]);
+
+        if (realmResult.rows.length === 0) {
+            return res.status(404).send("Reino no encontrado");
+        }
+
+        res.render("realm", {
+            realm: realmResult.rows[0],
+            items: itemsResult.rows
+        });
+    } catch (error) {
+        console.error("Error al obtener los items:", error);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Servidor en ejecución en http://localhost:${port}`);
 });

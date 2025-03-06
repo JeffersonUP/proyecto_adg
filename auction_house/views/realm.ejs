@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= realm.name %> - Items</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .items-container { display: flex; flex-wrap: wrap; justify-content: center; }
+        .item-card {
+            border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin: 10px;
+            width: 250px; text-align: center; background-color: #f9f9f9;
+        }
+        .item-card img { width: 100px; height: 100px; object-fit: cover; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Items en <%= realm.name %></h1>
+
+    <% if (items.length > 0) { %>
+        <div class="items-container">
+            <% items.forEach(item => { %>
+                <div class="item-card">
+                    <img src="<%= item.image %>" alt="<%= item.label %>">
+                    <h3><%= item.label %></h3>
+                    <p><strong>Slot:</strong> <%= item.slot %></p>
+                    <p><strong>Cantidad:</strong> <%= item.cant %></p>
+                    <p><strong>Precio:</strong> $<%= item.price %></p>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <p>No hay items en este reino.</p>
+    <% } %>
+
+    <a href="/">Volver a la lista de reinos</a>
+</body>
+</html>
